@@ -1,0 +1,12 @@
+#dates {
+    display: flex;
+    margin-bottom: 10px;
+}
+
+.date-input {
+    margin-right: 10px;
+}
+
+#page {
+    display: none;
+}
