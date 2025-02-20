@@ -6,11 +6,11 @@ All **completed** jobs between the given `start date` and `end date`, with the f
     Job ID - jobs
     Job Status - jobs
     Completed Date - jobs
-    Location Street - in locations with location id
+    Location Street - in locations with location id from jobs
     Location City
     Location State
     Location Zip
-    Customer ID - in customers with customer id
+    Customer ID - in customers with customer id from jobs
     Cutsomer First Name
     Customer Last Name
     Customer Street 

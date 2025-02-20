@@ -59,7 +59,7 @@ app.get('/authenticate', (req, res) => {
 });
 
 app.post('/jobs', async (req, res) => {
-    // #region POST /api
+    // #region POST /jobs
     const startDate = req.body.startDate;
     const endDate = req.body.endDate;
     const tenantID = req.body.tenantID;
@@ -81,12 +81,15 @@ app.post('/jobs', async (req, res) => {
         console.log(response);
     }
     const data = await response.json();
-    console.log(data);
+    // console.log(data);
 
 
     res.json(data);
     // #endregion
 });
+
+
+
 
 app.listen(PORT, () => {
     console.log(`Server is running on port http://localhost:${PORT}`);

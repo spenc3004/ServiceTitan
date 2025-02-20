@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
             { title: 'Job ID', field: 'id', width: 150 },
             { title: 'Job Status', field: 'jobStatus', width: 150 },
             { title: 'Completed Date', field: 'completedOn', width: 150 },
-
+            { title: 'Customer ID', field: 'customerId', width: 150 },
 
         ] //create columns from data field names
     });
@@ -90,6 +90,7 @@ document.getElementById('fetch').addEventListener('click', () => {
     const endDate = document.getElementById('end-date').value;
     const tenantID = document.getElementById('tenant-id').value;
 
+
     const data = { startDate, endDate, tenantID };
 
     fetch('/jobs', {
@@ -100,8 +101,14 @@ document.getElementById('fetch').addEventListener('click', () => {
         body: JSON.stringify(data)
     })
         .then(response => response.json())
-        .then(data => {
-            table.setData(data.data);
+        .then(jobsData => {
+            table.setData(jobsData.data);
+
         });
+
+
+
+
+
     // #endregion
 });
