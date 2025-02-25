@@ -65,30 +65,128 @@ app.post('/jobs', async (req, res) => {
     const tenantID = req.body.tenantID;
     const accessToken = req.headers.cookie.split('=')[1];
 
-    const url = `https://api-integration.servicetitan.io/jpm/v2/tenant/${tenantID}/jobs?jobStatus=Completed`
+    let allJobs = [];
+    let page = 1;
+    let hasMore = true;
 
-    const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-            'Authorization': accessToken,
-            'ST-App-Key': appKey
+    try {
+        while (hasMore) {
+            const fetchPromises = [];
+            const batchSize = 5; // Number of pages to fetch concurrently
 
+            // Create an array of promises to fetch a batch of pages concurrently
+            for (let i = 0; i < batchSize; i++) {
+                const url = `https://api-integration.servicetitan.io/jpm/v2/tenant/${tenantID}/jobs?jobStatus=Completed&page=${page + i}&completedOnOrAfter=${startDate}&completedBefore=${endDate}`;
+                fetchPromises.push(fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': accessToken,
+                        'ST-App-Key': appKey
+                    }
+                }).then(response => {
+                    if (response.status === 401) {
+                        throw new Error('Unauthorized');
+                    }
+                    return response.json();
+                }));
+            }
+
+            // Wait for all fetch promises to resolve
+            const results = await Promise.all(fetchPromises);
+
+            // Process the results
+            results.forEach(jobsData => {
+                allJobs = allJobs.concat(jobsData.data);
+                hasMore = jobsData.hasMore;
+            });
+
+            // Increment the page number by the batch size
+            page += batchSize;
+
+            // If any of the results indicate there are no more pages, stop the loop
+            if (!hasMore) {
+                break;
+            }
         }
-    })
 
-    if (response.status === 401) {
-        console.log('There was a problem');
-        console.log(response);
+        res.json({ data: allJobs });
+    } catch (error) {
+        console.error('Error fetching jobs:', error);
+        if (error.message === 'Unauthorized') {
+            res.status(401).json({ message: 'Unauthorized' });
+        } else {
+            res.status(500).json({ message: 'Internal Server Error' });
+        }
     }
-    const data = await response.json();
-    // console.log(data);
-
-
-    res.json(data);
     // #endregion
 });
 
+app.post('/locations', async (req, res) => {
+    // #region POST /locations
+    const locationId = req.body.locationId;
+    const tenantID = req.body.tenantID;
+    const accessToken = req.headers.cookie.split('=')[1];
 
+    try {
+        const locationUrl = `https://api-integration.servicetitan.io/crm/v2/tenant/${tenantID}/locations?${locationId}`;
+        const response = await fetch(locationUrl, {
+            method: 'GET',
+            headers: {
+                'Authorization': accessToken,
+                'ST-App-Key': appKey
+            }
+        });
+
+        if (response.status === 401) {
+            throw new Error('Unauthorized');
+        }
+
+        const locationsData = await response.json();
+        res.json({ data: locationsData.data });
+    } catch (error) {
+        console.error('Error fetching locations:', error);
+        if (error.message === 'Unauthorized') {
+            res.status(401).json({ message: 'Unauthorized' });
+        } else {
+            res.status(500).json({ message: 'Internal Server Error' });
+        }
+    }
+
+    // #endregion
+});
+
+app.post('/customers', async (req, res) => {
+    // #region POST /customers
+    const customerId = req.body.customerId;
+    const tenantID = req.body.tenantID;
+    const accessToken = req.headers.cookie.split('=')[1];
+
+    try {
+        const customerUrl = `https://api-integration.servicetitan.io/crm/v2/tenant/${tenantID}/customers/${customerId}`;
+        const response = await fetch(customerUrl, {
+            method: 'GET',
+            headers: {
+                'Authorization': accessToken,
+                'ST-App-Key': appKey
+            }
+        });
+
+        if (response.status === 401) {
+            throw new Error('Unauthorized');
+        }
+
+        const customerData = await response.json();
+        res.json({ data: customerData });
+    } catch (error) {
+        console.error('Error fetching customers:', error);
+        if (error.message === 'Unauthorized') {
+            res.status(401).json({ message: 'Unauthorized' });
+        } else {
+            res.status(500).json({ message: 'Internal Server Error' });
+        }
+    }
+    // #endregion
+});
 
 
 app.listen(PORT, () => {
