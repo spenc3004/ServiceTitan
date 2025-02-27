@@ -17,6 +17,6 @@ All **completed** jobs between the given `start date` and `end date`, with the f
     Cutsomer City--DONE--
     Customer State --DONE--
     Customer Zip--DONE--
-    Total Cost of Job in Dollars
+    Total Cost of Job in Dollars--DONE--
 
 
