@@ -3,7 +3,7 @@ const app = express();
 const PORT = 3000;
 require('dotenv').config();
 const appKey = process.env.APP_KEY;
-console.log(process.env.APP_KEY);
+
 
 app.use(express.static('public'));
 app.use(express.json()); //middleware to pull json out of the request
