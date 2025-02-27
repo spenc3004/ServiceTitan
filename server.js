@@ -121,15 +121,15 @@ app.post('/jobs', async (req, res) => {
     // #endregion
 });
 
-app.post('/locations', async (req, res) => {
-    // #region POST /locations
-    const locationId = req.body.locationId;
+app.post('/invoices', async (req, res) => {
+    // #region POST /invoices
+    const invoiceId = req.body.invoiceId;
     const tenantID = req.body.tenantID;
     const accessToken = req.headers.cookie.split('=')[1];
 
     try {
-        const locationUrl = `https://api-integration.servicetitan.io/crm/v2/tenant/${tenantID}/locations?${locationId}`;
-        const response = await fetch(locationUrl, {
+        const invoiceUrl = `https://api-integration.servicetitan.io/accounting/v2/tenant/${tenantID}/invoices?ids=${invoiceId}`;
+        const response = await fetch(invoiceUrl, {
             method: 'GET',
             headers: {
                 'Authorization': accessToken,
@@ -141,42 +141,8 @@ app.post('/locations', async (req, res) => {
             throw new Error('Unauthorized');
         }
 
-        const locationsData = await response.json();
-        res.json({ data: locationsData.data });
-    } catch (error) {
-        console.error('Error fetching locations:', error);
-        if (error.message === 'Unauthorized') {
-            res.status(401).json({ message: 'Unauthorized' });
-        } else {
-            res.status(500).json({ message: 'Internal Server Error' });
-        }
-    }
-
-    // #endregion
-});
-
-app.post('/customers', async (req, res) => {
-    // #region POST /customers
-    const customerId = req.body.customerId;
-    const tenantID = req.body.tenantID;
-    const accessToken = req.headers.cookie.split('=')[1];
-
-    try {
-        const customerUrl = `https://api-integration.servicetitan.io/crm/v2/tenant/${tenantID}/customers/${customerId}`;
-        const response = await fetch(customerUrl, {
-            method: 'GET',
-            headers: {
-                'Authorization': accessToken,
-                'ST-App-Key': appKey
-            }
-        });
-
-        if (response.status === 401) {
-            throw new Error('Unauthorized');
-        }
-
-        const customerData = await response.json();
-        res.json({ data: customerData });
+        const invoicesData = await response.json();
+        res.json({ data: invoicesData.data });
     } catch (error) {
         console.error('Error fetching customers:', error);
         if (error.message === 'Unauthorized') {
