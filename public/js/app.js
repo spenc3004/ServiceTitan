@@ -30,8 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Authenticated');
             setLogin(false);
         }
-    });
 
+    });
 
     //initialize table
     table = new Tabulator('#table',
@@ -42,15 +42,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 { title: 'Job ID', field: 'id' },
                 { title: 'Job Status', field: 'jobStatus' },
                 { title: 'Completed Date', field: 'completedOn' },
-                { title: 'Job Location Address', field: 'locationAddress' },
+                { title: 'Job Location Street', field: 'locationStreet' },
+                { title: 'Job Location City', field: 'locationCity' },
+                { title: 'Job Location State', field: 'locationState' },
+                { title: 'Job Location Zip', field: 'locationZip' },
                 { title: 'Total Cost', field: 'cost' },
                 { title: 'Customer ID', field: 'customerId' },
                 { title: 'Customer Name', field: 'name' },
-                { title: 'Customer Address', field: 'customerAddress' }
+                { title: 'Customer Type', field: 'customerType' },
+                { title: 'Customer Street', field: 'customerStreet' },
+                { title: 'Customer City', field: 'customerCity' },
+                { title: 'Customer State', field: 'customerState' },
+                { title: 'Customer Zip', field: 'customerZip' },
+                { title: 'Do Not Mail', field: 'doNotMail' }
 
 
             ] //create columns from data field names
         });
+
+    //Multiselect
+    NiceSelect.bind(document.getElementById('memberships-select'));
+
+    // Trigger download
+    document.getElementById('download-csv').addEventListener('click', function () {
+        table.download('csv', 'data.csv');
+    });
+    document.getElementById('download-csv').disabled = true
 
 
     // #endregion
@@ -98,10 +115,9 @@ document.getElementById('fetch').addEventListener('click', () => {
     const data = { startDate, endDate, tenantID };
 
     // Show loading spinner
-    document.getElementById('loading-spinner').style.display = 'block';
+    document.getElementById('loading-spinner').style.display = 'flex';
 
     // Fetch job data from jobs endpoint
-
     fetch('/jobs', {
         method: 'POST',
         headers: {
@@ -113,7 +129,7 @@ document.getElementById('fetch').addEventListener('click', () => {
         .then(async jobsData => {
             const jobsArray = jobsData.data
 
-            // Fetch customer name, address, job location, and total data for each job from the invoices endpoint
+            // Fetch customer name, address, job location, and total cost data for each job from the invoices endpoint
             const invoicePromises = jobsArray.map(job => {
                 return fetch('/invoices', {
                     method: 'POST',
@@ -126,30 +142,61 @@ document.getElementById('fetch').addEventListener('click', () => {
                     .then(invoiceData => {
                         job.invoice = invoiceData.data[0] // Add the invoice object to the job object
                         job.cost = job.invoice.total; // Add invoice total to the job object
-                        const name = job.invoice.customer.name // Set name to the name form customer object in invoice
-                        job.name = name // Add name to the job object
-                        const customerAddress = job.invoice.customerAddress // Set custAddress to the customer address in invoice
-                        job.customerAddress = `${customerAddress.street}, ${customerAddress.city}, ${customerAddress.state}, ${customerAddress.zip}` // Add the formatted customer address to the job object
+                        job.name = job.invoice.customer.name // Set and add name from invoice data to the job object
+                        const customerAddress = job.invoice.customerAddress // Set customerAddress to the customer address in invoice
+                        // Add address fields for customer to job object
+                        job.customerStreet = customerAddress.street
+                        job.customerCity = customerAddress.city
+                        job.customerState = customerAddress.state
+                        job.customerZip = customerAddress.zip
                         const address = job.invoice.locationAddress // Set address to the locationAddress object from the invoice
-                        job.locationAddress = `${address.street}, ${address.city}, ${address.state}, ${address.zip}`; // Add formatted address to the job object
+                        // Add location address fields to job location
+                        job.locationStreet = address.street
+                        job.locationCity = address.city
+                        job.locationState = address.state
+                        job.locationZip = address.zip
                         return job;
                     });
             });
 
             // Wait for all invoice data to be fetched
             const jobsWithInvoiceData = await Promise.all(invoicePromises);
-            //console.log(jobsWithInvoiceData);
+
+            // Fetch customer type and do not mail
+            const customerPromises = jobsWithInvoiceData.map(job => {
+                return fetch('/customers', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ customerId: job.customerId, tenantID })
+                })
+                    .then(response => response.json())
+                    .then(customerData => {
+                        job.customerData = customerData.data; // Add customer data to the job object
+                        job.customerType = customerData.data.type // Set and add customer type to job object
+                        job.doNotMail = customerData.data.doNotMail // Set and add if the customeris on the do not mail list to the job object
+                        return job;
+                    });
+            });
+
+            // Wait for all customer data to be fetched
+            const jobsWithCustomerData = await Promise.all(customerPromises);
+            console.log(jobsWithCustomerData)
+
 
             // Put data into table
-            table.setData(jobsWithInvoiceData);
+            table.setData(jobsWithCustomerData);
 
             // Hide loading spinner
             document.getElementById('loading-spinner').style.display = 'none';
+            document.getElementById('download-csv').disabled = false
         })
         .catch(error => {
             console.error('There was a problem with the fetch operation:', error);
             // Hide loading spinner
             document.getElementById('loading-spinner').style.display = 'none';
+            //document.getElementById('download-csv').style.display = 'block';
         });
     // #endregion
 });

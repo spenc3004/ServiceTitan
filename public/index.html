@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="./css/normalize.css">
     <link rel="stylesheet" href="./css/skeleton.css">
     <link rel="stylesheet" href="./css/tabulator_simple.css">
+    <link rel="stylesheet" href="./css/nice-select2.css">
     <link rel="stylesheet" href="./css/styles.css">
     <title>ServiceTitan</title>
 </head>
@@ -39,7 +40,19 @@
         </div>
 
 
-        <button id="fetch">Get</button>
+        <button id="fetch">Get</button><button id="download-csv">Download CSV</button>
+
+        <div id="memberships">
+            <label for="memberships">Memberships To Exclude:</label>
+            <select id="memberships-select" multiple>
+                <option value="membership-1">Gold Membership</option>
+                <option value="membership-2">Silver Membership</option>
+                <option value="membership-3">Bronze Membership</option>
+            </select>
+            <button id="btn-filter">Filter</button>
+        </div>
+
+        <!-- Filter to exclude memberships checklist or something to show memberships perform fetch to populate memberships -->
 
         <div id="table">
 
@@ -49,6 +62,7 @@
 
 
     <script src="./js/tabulator.min.js"></script>
+    <script src="./js/nice-select2.js"></script>
     <script src="./js/app.js"></script>
 </body>
 
