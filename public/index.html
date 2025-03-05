@@ -19,7 +19,7 @@
         <input type="text" id="tenant-id" placeholder="Tenant ID">
         <input type="text" id="client-id" placeholder="Client ID">
         <input type="text" id="client-secret" placeholder="Client Secret">
-        <button id="login-button">Login</button>
+        <button id="login-btn">Login</button>
     </div>
 
     <div id="loading-spinner" style="display:none;">
@@ -40,17 +40,15 @@
         </div>
 
 
-        <button id="fetch">Get</button><button id="download-csv">Download CSV</button>
-
-        <div id="memberships">
+        <button id="fetch-btn">Get</button><button id="download-csv">Download CSV</button>
+        <div id="memberships" style="display:none;">
             <label for="memberships">Memberships To Exclude:</label>
             <select id="memberships-select" multiple>
-                <option value="membership-1">Gold Membership</option>
-                <option value="membership-2">Silver Membership</option>
-                <option value="membership-3">Bronze Membership</option>
+
             </select>
-            <button id="btn-filter">Filter</button>
+            <button id="filter-btn">Filter</button>
         </div>
+
 
         <!-- Filter to exclude memberships checklist or something to show memberships perform fetch to populate memberships -->
 

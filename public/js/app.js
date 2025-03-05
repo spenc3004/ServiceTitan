@@ -60,8 +60,36 @@ document.addEventListener('DOMContentLoaded', () => {
             ] //create columns from data field names
         });
 
-    //Multiselect
-    NiceSelect.bind(document.getElementById('memberships-select'));
+
+
+    // Fetch the membeship type names
+    const tenantID = document.getElementById('tenant-id').value;
+    fetch('/membershipTypes', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ tenantID })
+    })
+        .then(response => response.json())
+        .then(async membershipTypesData => {
+            const membershipsData = membershipTypesData.data
+            const selectElement = document.getElementById('memberships-select');
+
+            // Clear existing options (if any)
+            selectElement.innerHTML = "";
+
+            // Push the mebership type names into the options of the multi-select
+            membershipsData.forEach(membership => {
+                const option = document.createElement("option");
+                option.textContent = membership.name; // Display name
+                option.value = membership.id || membership.name; // Each option must have a value otherwise you get an error when deselecting an option (won't let you deselect because something in the nice-select2.js file in then undefined) and when selecting it says the option isn't found and asks if it has a value (still lets you select it but puts the error in the console)
+                selectElement.appendChild(option); // Add the option to the multi-select
+            });
+
+            NiceSelect.bind(selectElement); // Initialize the NiceSelect on the multi-select
+            document.getElementById('memberships').style.display = 'block'; // Show multi-select now that it has retrieved the data
+        })
 
     // Trigger download
     document.getElementById('download-csv').addEventListener('click', function () {
@@ -73,7 +101,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // #endregion
 });
 
-document.getElementById('login-button').addEventListener('click', () => {
+document.getElementById('login-btn').addEventListener('click', () => {
     // #region user clicks Login button
     const clientId = document.getElementById('client-id').value;
     const clientSecret = document.getElementById('client-secret').value;
@@ -104,7 +132,7 @@ document.getElementById('login-button').addEventListener('click', () => {
 }
 );
 
-document.getElementById('fetch').addEventListener('click', () => {
+document.getElementById('fetch-btn').addEventListener('click', () => {
     // #region user clicks Get button
 
     const startDate = document.getElementById('start-date').value;
@@ -184,6 +212,22 @@ document.getElementById('fetch').addEventListener('click', () => {
             const jobsWithCustomerData = await Promise.all(customerPromises);
             console.log(jobsWithCustomerData)
 
+            // Fetch customer memberhip data
+            const membershipPromises = jobsWithCustomerData.map(job => {
+                return fetch('/memberships', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ customerId: job.customerId, tenantID })
+                })
+                    .then(response => response.json())
+                    .then(membershipData => {
+                        job.membershipData = membershipData.data
+                        return job;
+                    });
+            });
+
 
             // Put data into table
             table.setData(jobsWithCustomerData);
@@ -200,3 +244,12 @@ document.getElementById('fetch').addEventListener('click', () => {
         });
     // #endregion
 });
+
+document.getElementById('filter-btn').addEventListener('click', () => {
+    // #region user clicks Filter button
+    console.log("Filtering...")
+
+
+
+    // #endregion
+})

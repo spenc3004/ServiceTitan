@@ -187,6 +187,37 @@ app.post('/customers', async (req, res) => {
     // #endregion
 });
 
+app.post('/membershipTypes', async (req, res) => {
+    // #region POST /membershipTypes
+    const tenantId = req.body.tenantID;
+    const accessToken = req.headers.cookie.split('=')[1];
+
+    try {
+        const url = `https://api-integration.servicetitan.io/memberships/v2/tenant/${tenantId}/membership-types`;
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': accessToken,
+                'ST-App-Key': appKey
+            }
+        });
+
+        if (response.status === 401) {
+            throw new Error('Unauthorized');
+        }
+
+        const membershipTypesData = await response.json();
+        res.json({ data: membershipTypesData.data });
+    } catch (error) {
+        console.error('Error fetching membership types:', error);
+        if (error.message === 'Unauthorized') {
+            res.status(401).json({ message: 'Unauthorized' });
+        } else {
+            res.status(500).json({ message: 'Internal Server Error' });
+        }
+    }
+    // #endregion
+});
 
 
 

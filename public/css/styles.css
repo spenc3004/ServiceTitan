@@ -29,3 +29,8 @@ button:disabled {
     background-color: #ccc;
     cursor: not-allowed;
 }
+
+#memberships-filter {
+    display: flex;
+    gap: 10px;
+}
