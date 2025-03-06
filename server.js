@@ -161,7 +161,7 @@ app.post('/customers', async (req, res) => {
     const accessToken = req.headers.cookie.split('=')[1];
 
     try {
-        const customerUrl = `https://api-integration.servicetitan.io/crm/v2/tenant/${tenantID}/customers/${customerId}`;
+        const customerUrl = `https://api-integration.servicetitan.io/crm/v2/tenant/${tenantID}/customers/?ids=${customerId}`;
         const response = await fetch(customerUrl, {
             method: 'GET',
             headers: {
@@ -219,6 +219,46 @@ app.post('/membershipTypes', async (req, res) => {
     // #endregion
 });
 
+app.post('/memberships', async (req, res) => {
+    // #region POST /memberships
+    const tenantId = req.body.tenantID;
+    const customerId = req.body.customerId
+    const accessToken = req.headers.cookie.split('=')[1];
+
+    try {
+        const membershipTypesUrl = `https://api-integration.servicetitan.io/memberships/v2/tenant/${tenantId}/memberships/?customerIds=${customerId}`;
+        const response = await fetch(membershipTypesUrl, {
+            method: 'GET',
+            headers: {
+                'Authorization': accessToken,
+                'ST-App-Key': appKey
+            }
+        });
+
+        if (response.status === 401) {
+            throw new Error('Unauthorized');
+        }
+
+        const membershipsData = await response.json();
+
+        //Handleing customers who have never had a membership as it will return empty
+        if (!membershipsData.data || membershipsData.data.length === 0) {
+            return res.json({
+                data: [{ status: 'No membership data found', membershipTypeId: 'N/A' }]
+            });
+        }
+
+        res.json({ data: membershipsData.data });
+    } catch (error) {
+        console.error('Error fetching memberships:', error);
+        if (error.message === 'Unauthorized') {
+            res.status(401).json({ message: 'Unauthorized' });
+        } else {
+            res.status(500).json({ message: 'Internal Server Error' });
+        }
+    }
+    // #endregion
+});
 
 
 

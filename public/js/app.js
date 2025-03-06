@@ -54,6 +54,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 { title: 'Customer City', field: 'customerCity' },
                 { title: 'Customer State', field: 'customerState' },
                 { title: 'Customer Zip', field: 'customerZip' },
+                { title: 'Membership Satus', field: 'membershipStatus' },
+                { title: 'Membership Type', field: 'membershipType' },
                 { title: 'Do Not Mail', field: 'doNotMail' }
 
 
@@ -145,6 +147,7 @@ document.getElementById('fetch-btn').addEventListener('click', () => {
     // Show loading spinner
     document.getElementById('loading-spinner').style.display = 'flex';
 
+
     // Fetch job data from jobs endpoint
     fetch('/jobs', {
         method: 'POST',
@@ -201,18 +204,19 @@ document.getElementById('fetch-btn').addEventListener('click', () => {
                 })
                     .then(response => response.json())
                     .then(customerData => {
-                        job.customerData = customerData.data; // Add customer data to the job object
-                        job.customerType = customerData.data.type // Set and add customer type to job object
-                        job.doNotMail = customerData.data.doNotMail // Set and add if the customeris on the do not mail list to the job object
+                        job.customerData = customerData.data.data[0]; // Add customer data to the job object
+                        job.customerType = job.customerData.type // Set and add customer type to job object
+                        job.doNotMail = job.customerData.doNotMail // Set and add if the customeris on the do not mail list to the job object
                         return job;
                     });
             });
 
             // Wait for all customer data to be fetched
             const jobsWithCustomerData = await Promise.all(customerPromises);
-            console.log(jobsWithCustomerData)
+            //console.log(jobsWithCustomerData)
 
-            // Fetch customer memberhip data
+
+            // Fetch customer membership data
             const membershipPromises = jobsWithCustomerData.map(job => {
                 return fetch('/memberships', {
                     method: 'POST',
@@ -223,14 +227,19 @@ document.getElementById('fetch-btn').addEventListener('click', () => {
                 })
                     .then(response => response.json())
                     .then(membershipData => {
-                        job.membershipData = membershipData.data
+                        job.membershipData = membershipData.data[0] // Add the membership data to the object
+                        job.membershipStatus = job.membershipData.status // Set and add the status of the membership
+                        job.membershipType = job.membershipData.membershipTypeId // Set and add the membership type as the type id
                         return job;
                     });
             });
 
+            // Wait for all membership data to be fetched
+            const jobsWithMembershipData = await Promise.all(membershipPromises);
+            //console.log(jobsWithMembershipData)
 
             // Put data into table
-            table.setData(jobsWithCustomerData);
+            table.setData(jobsWithMembershipData);
 
             // Hide loading spinner
             document.getElementById('loading-spinner').style.display = 'none';

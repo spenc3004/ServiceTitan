@@ -6,7 +6,8 @@ All **completed** jobs between the given `start date` and `end date`, with the f
     Break addresses down --DONE--
     Customer type --DONE--
     Do not mail --DONE--
-    Memberships
+    Memberships --DONE--
+    Membership filtering
     Job ID - jobs --DONE--
     Job Status - jobs--DONE--
     Completed Date - jobs--DONE--
