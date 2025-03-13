@@ -241,10 +241,10 @@ app.post('/memberships', async (req, res) => {
 
         const membershipsData = await response.json();
 
-        //Handleing customers who have never had a membership as it will return empty
+        //Handeling customers who have never had a membership as it will return empty
         if (!membershipsData.data || membershipsData.data.length === 0) {
             return res.json({
-                data: [{ status: 'No membership data found', membershipTypeId: 'N/A' }]
+                data: [{ status: 'N/A', membershipTypeId: 'N/A' }]
             });
         }
 

@@ -6,8 +6,10 @@ All **completed** jobs between the given `start date` and `end date`, with the f
     Break addresses down --DONE--
     Customer type --DONE--
     Do not mail --DONE--
-    Memberships --DONE--
-    Membership filtering
+    Memberships --DONE-- Pull mem id from invoice to then hit memberships <- Stays `null` no matter what
+    Membership at time of job --DONE--
+    Membership status --DONE--
+    Membership filtering --Remove filtering for now with commenting-- --DONE--
     Job ID - jobs --DONE--
     Job Status - jobs--DONE--
     Completed Date - jobs--DONE--
