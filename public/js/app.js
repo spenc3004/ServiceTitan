@@ -46,7 +46,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 { title: 'Job Location City', field: 'locationCity' },
                 { title: 'Job Location State', field: 'locationState' },
                 { title: 'Job Location Zip', field: 'locationZip' },
-                { title: 'Membership at Time of Job', field: 'jobMember' },
                 { title: 'Total Cost', field: 'cost' },
                 { title: 'Customer ID', field: 'customerId' },
                 { title: 'Customer Name', field: 'name' },
@@ -55,9 +54,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 { title: 'Customer City', field: 'customerCity' },
                 { title: 'Customer State', field: 'customerState' },
                 { title: 'Customer Zip', field: 'customerZip' },
-                { title: 'Membership Satus', field: 'membershipStatus' },
-                { title: 'Membership Type', field: 'membershipType' },
-                { title: 'Membership Name', field: 'membershipName' },
                 { title: 'Do Not Mail', field: 'doNotMail' }
 
 
@@ -79,24 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(async responseData => {
             membershipTypesData = responseData.data
         })
-    /*
-               const selectElement = document.getElementById('memberships-select');
-   
-               // Clear existing options (if any)
-               selectElement.innerHTML = "";
-   
-               // Push the mebership type names into the options of the multi-select
-               membershipTypesData.forEach(membership => {
-                   const option = document.createElement("option");
-                   option.textContent = membership.name; // Display name
-                   option.value = membership.id || membership.name; // Each option must have a value otherwise you get an error when deselecting an option (won't let you deselect because something in the nice-select2.js file in then undefined) and when selecting it says the option isn't found and asks if it has a value (still lets you select it but puts the error in the console)
-                   selectElement.appendChild(option); // Add the option to the multi-select
-               });
-               console.log(selectElement)
-               NiceSelect.bind(selectElement); // Initialize the NiceSelect on the multi-select
-               document.getElementById('memberships').style.display = 'block'; // Show multi-select now that it has retrieved the data
-           })
-   */
+
     // Trigger download
     document.getElementById('download-csv').addEventListener('click', function () {
         table.download('csv', 'data.csv');
@@ -166,8 +145,36 @@ document.getElementById('fetch-btn').addEventListener('click', () => {
             const jobsArray = jobsData.data
 
 
+            // Fetch customer membership data
+            const membershipPromises = jobsArray.map(job => {
+                return fetch('/memberships', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ customerId: job.customerId, tenantID })
+                })
+                    .then(response => response.json())
+                    .then(membershipsData => {
+                        job.membershipData = membershipsData.data // Add the membership data to the object
+
+                        job.hasActiveMembership = job.membershipData.some(each => each.status === 'active') // Check if there is an active membership
+
+                        return job;
+                    });
+            });
+
+            // Wait for all membership data to be fetched
+            const jobsWithMembershipData = await Promise.all(membershipPromises);
+
+            // Filter out jobs with active membership data
+            const nonMembershipJobs = jobsWithMembershipData.filter(job => !job.hasActiveMembership); // Filter out jobs without an active membership
+
+
+            //console.log(nonMembershipJobs)
+
             // Fetch customer name, address, job location, and total cost data for each job from the invoices endpoint
-            const invoicePromises = jobsArray.map(job => {
+            const invoicePromises = nonMembershipJobs.map(job => {
                 return fetch('/invoices', {
                     method: 'POST',
                     headers: {
@@ -225,86 +232,8 @@ document.getElementById('fetch-btn').addEventListener('click', () => {
             const jobsWithCustomerData = await Promise.all(customerPromises);
             //console.log(jobsWithCustomerData)
 
-
-            // Fetch customer membership data
-            const membershipPromises = jobsWithCustomerData.map(job => {
-                return fetch('/memberships', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ customerId: job.customerId, tenantID })
-                })
-                    .then(response => response.json())
-                    .then(membershipsData => {
-                        job.membershipData = membershipsData.data // Add the membership data to the object
-
-                        // Extract each membership's status, type, and name separately to handle multiple memberships being listed
-                        job.membershipStatus = [];
-                        job.membershipType = [];
-                        job.membershipName = [];
-
-                        // Only display the membership info in the table if it is active otherwise leave it as N/A
-                        job.membershipData.forEach(each => {
-                            if (each.status === "Active" || each.status === "N/A") {
-                                job.membershipStatus.push(each.status);
-                                job.membershipType.push(each.membershipTypeId);
-                                // Find the membership name
-                                let membershipName = 'N/A';
-                                const matchedType = membershipTypesData.find(type => Number(type.id) === Number(each.membershipTypeId));
-                                if (matchedType) {
-                                    membershipName = matchedType.name;
-                                }
-
-                                job.membershipName.push(membershipName);
-
-                            }
-                        });
-
-
-
-                        //Add logic to find the membership that was active during the Job
-                        let activeMembership = job.membershipData.filter(membership => {
-                            if (membership.status === "No membership data found") {
-                                return false
-                            }
-
-                            const jobDate = new Date(job.completedOn);
-                            const membershipStartDate = new Date(membership.from);
-                            const membershipEndDate = membership.to ? new Date(membership.to) : null; // Handle null `to` date
-                            return jobDate >= membershipStartDate && (membershipEndDate === null || jobDate < membershipEndDate);
-
-                        });
-
-                        if (activeMembership.length > 0) {
-                            job.activeMembership = activeMembership; // Store all active memberships
-                        }
-                        else {
-                            activeMembership = [{ status: 'N/A', membershipTypeId: 'N/A' }];
-                            job.activeMembership = activeMembership
-                        }
-
-                        job.jobMember = job.activeMembership
-                            .map(item => {
-                                const matchedType = membershipTypesData.find(type => Number(type.id) === Number(item.membershipTypeId));
-                                return matchedType ? matchedType.name : "N/A";
-                            })
-                            .filter(name => name !== "N/A") // Remove unmatched values if needed
-                            .join(", ") || "N/A"; // If all are "N/A", keep "N/A"
-
-
-
-
-                        return job;
-                    });
-            });
-
-            // Wait for all membership data to be fetched
-            const jobsWithMembershipData = await Promise.all(membershipPromises);
-            console.log(jobsWithMembershipData)
-
             // Put data into table
-            table.setData(jobsWithMembershipData);
+            table.setData(jobsWithCustomerData);
 
             // Hide loading spinner
             document.getElementById('loading-spinner').style.display = 'none';
@@ -314,16 +243,6 @@ document.getElementById('fetch-btn').addEventListener('click', () => {
             console.error('There was a problem with the fetch operation:', error);
             // Hide loading spinner
             document.getElementById('loading-spinner').style.display = 'none';
-            //document.getElementById('download-csv').style.display = 'block';
         });
     // #endregion
 });
-
-document.getElementById('filter-btn').addEventListener('click', () => {
-    // #region user clicks Filter button
-    console.log("Filtering...")
-
-
-
-    // #endregion
-})

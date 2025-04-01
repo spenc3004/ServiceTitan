@@ -7,14 +7,14 @@
     <link rel="stylesheet" href="./css/normalize.css">
     <link rel="stylesheet" href="./css/skeleton.css">
     <link rel="stylesheet" href="./css/tabulator_simple.css">
-    <link rel="stylesheet" href="./css/nice-select2.css">
     <link rel="stylesheet" href="./css/styles.css">
     <title>ServiceTitan</title>
 </head>
 
 <body>
     <h3>Welcome to the ServiceTitan App</h3>
-
+    <p>This returns all of the completed jobs between the starts and end date excluding any jobs that have any
+        active memberships.</p>
     <div id="login-area">
         <input type="text" id="tenant-id" placeholder="Tenant ID">
         <input type="text" id="client-id" placeholder="Client ID">
@@ -41,16 +41,6 @@
 
 
         <button id="fetch-btn">Get</button><button id="download-csv">Download CSV</button>
-        <div id="memberships" style="display:none;">
-            <label for="memberships">Memberships To Exclude:</label>
-            <select id="memberships-select" multiple>
-
-            </select>
-            <button id="filter-btn">Filter</button>
-        </div>
-
-
-        <!-- Filter to exclude memberships checklist or something to show memberships perform fetch to populate memberships -->
 
         <div id="table">
 
@@ -60,7 +50,6 @@
 
 
     <script src="./js/tabulator.min.js"></script>
-    <script src="./js/nice-select2.js"></script>
     <script src="./js/app.js"></script>
 </body>
 
