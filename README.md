@@ -1,15 +1,43 @@
-To use you must be a registered developer with ServiceTitan to have an app key. To obtain that follow their instructions found here: https://developer.servicetitan.io/docs/get-going-getting-access/
+## 🛠️ Getting Started
 
-Getting started:
+> **Note:** You must be a registered developer with ServiceTitan to obtain an App Key.  
+> Follow their instructions here:  
+> 👉 [ServiceTitan Developer Access Guide](https://developer.servicetitan.io/docs/get-going-getting-access/)
 
-  1. Upon first use be sure to run "npm i" to install necessary packages.
+---
 
-  2. Once you have an app key create a ".env" file and add this line of code "APP_KEY=you_app_key_here".
+### Setup Instructions
 
-  3. Inside the directory terminal run "npm run start" and then open the local host link.
+#### 1. Install dependencies
 
-  4. Then using your Tenant ID, Client ID, and Client Secret login.
+Run the following command in the project directory to install required packages:
 
-  5. Select a start and end date an click get to retrieve the completed jobs between those two dates.
+```
+npm install
+```
 
-Congrats now you have a list of information about those completed jobs that you can use (ethically and responsibly).
+
+#### 2. Create a .env file
+After obtaining your App Key from ServiceTitan, create a .env file in the root of the project and add:
+
+```
+APP_KEY=your_app_key_here
+```
+
+#### 3. Start the application
+In the project directory terminal, run:
+```
+    npm run start
+```
+
+#### 4. Open the local development link (usually http://localhost:3000) in your browser.
+
+#### 5. Log in
+Use your Tenant ID, Client ID, and Client Secret to authenticate.
+
+#### 6. Fetch completed jobs
+Select a start and end date, then click "Get" to retrieve completed jobs within that range.
+
+## ✅ You're all set!
+
+You’ll now see a list of completed jobs you can work with — be sure to use this data ethically and responsibly.
