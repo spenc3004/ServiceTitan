@@ -9,6 +9,6 @@ Getting started:
 
 3. Then using your tenant ID, client ID, and Client Secret login.
 
-4. Select a start and end date an clcik get to retrieve the completed jobs between those two dates.
+4. Select a start and end date an click get to retrieve the completed jobs between those two dates.
 
 Congrats now you have a list of information about those completed jobs that you can use (ethically and responsibly)
