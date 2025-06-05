@@ -29,13 +29,12 @@ In the project directory terminal, run:
 ```
     npm run start
 ```
+Open the local development link (usually http://localhost:3001) in your browser.
 
-#### 4. Open the local development link (usually http://localhost:3000) in your browser.
-
-#### 5. Log in
+#### 4. Log in
 Use your Tenant ID, Client ID, and Client Secret to authenticate.
 
-#### 6. Fetch completed jobs
+#### 5. Fetch completed jobs
 Select a start and end date, then click "Get" to retrieve completed jobs within that range.
 
 ## ✅ You're all set!
