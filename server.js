@@ -3,10 +3,12 @@ const app = express();
 const PORT = 3000;
 require('dotenv').config();
 const appKey = process.env.APP_KEY;
+const cookieParser = require('cookie-parser');
 
 
 app.use(express.static('public'));
 app.use(express.json()); //middleware to pull json out of the request
+app.use(cookieParser()); //middleware to parse cookies
 
 
 app.post('/login', async (req, res) => {
@@ -63,7 +65,12 @@ app.post('/jobs', async (req, res) => {
     const startDate = req.body.startDate;
     const endDate = req.body.endDate;
     const tenantID = req.body.tenantID;
-    const accessToken = req.headers.cookie.split('=')[1];
+    const accessToken = req.cookies.access_token;
+
+    if (!accessToken) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+    }
 
     let allJobs = [];
     let page = 1;
@@ -125,7 +132,12 @@ app.post('/invoices', async (req, res) => {
     // #region POST /invoices
     const invoiceId = req.body.invoiceId;
     const tenantID = req.body.tenantID;
-    const accessToken = req.headers.cookie.split('=')[1];
+    const accessToken = req.cookies.access_token;
+
+    if (!accessToken) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+    }
 
     try {
         const invoiceUrl = `https://api-integration.servicetitan.io/accounting/v2/tenant/${tenantID}/invoices?ids=${invoiceId}`;
@@ -158,7 +170,12 @@ app.post('/customers', async (req, res) => {
     // #region POST /customers
     const customerId = req.body.customerId;
     const tenantID = req.body.tenantID;
-    const accessToken = req.headers.cookie.split('=')[1];
+    const accessToken = req.cookies.access_token;
+
+    if (!accessToken) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+    }
 
     try {
         const customerUrl = `https://api-integration.servicetitan.io/crm/v2/tenant/${tenantID}/customers/?ids=${customerId}`;
@@ -190,7 +207,12 @@ app.post('/customers', async (req, res) => {
 app.post('/membershipTypes', async (req, res) => {
     // #region POST /membershipTypes
     const tenantId = req.body.tenantID;
-    const accessToken = req.headers.cookie.split('=')[1];
+    const accessToken = req.cookies.access_token;
+
+    if (!accessToken) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+    }
 
     try {
         const url = `https://api-integration.servicetitan.io/memberships/v2/tenant/${tenantId}/membership-types`;
@@ -223,7 +245,12 @@ app.post('/memberships', async (req, res) => {
     // #region POST /memberships
     const tenantId = req.body.tenantID;
     const customerId = req.body.customerId
-    const accessToken = req.headers.cookie.split('=')[1];
+    const accessToken = req.cookies.access_token;
+
+    if (!accessToken) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+    }
 
     try {
         const membershipTypesUrl = `https://api-integration.servicetitan.io/memberships/v2/tenant/${tenantId}/memberships/?customerIds=${customerId}`;
