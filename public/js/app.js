@@ -79,33 +79,33 @@ document.addEventListener('DOMContentLoaded', () => {
         .then(async responseData => {
             membershipTypesData = responseData.data
         })
-    /*
-               const selectElement = document.getElementById('memberships-select');
-   
-               // Clear existing options (if any)
-               selectElement.innerHTML = "";
-   
-               // Push the mebership type names into the options of the multi-select
-               membershipTypesData.forEach(membership => {
-                   const option = document.createElement("option");
-                   option.textContent = membership.name; // Display name
-                   option.value = membership.id || membership.name; // Each option must have a value otherwise you get an error when deselecting an option (won't let you deselect because something in the nice-select2.js file in then undefined) and when selecting it says the option isn't found and asks if it has a value (still lets you select it but puts the error in the console)
-                   selectElement.appendChild(option); // Add the option to the multi-select
-               });
-               console.log(selectElement)
-               NiceSelect.bind(selectElement); // Initialize the NiceSelect on the multi-select
-               document.getElementById('memberships').style.display = 'block'; // Show multi-select now that it has retrieved the data
-           })
-   */
-    // Trigger download
-    document.getElementById('download-csv').addEventListener('click', function () {
-        table.download('csv', 'data.csv');
+
+    const selectElement = document.getElementById('memberships-select');
+
+    // Clear existing options (if any)
+    selectElement.innerHTML = "";
+
+    // Push the mebership type names into the options of the multi-select
+    membershipTypesData.forEach(membership => {
+        const option = document.createElement("option");
+        option.textContent = membership.name; // Display name
+        option.value = membership.id || membership.name; // Each option must have a value otherwise you get an error when deselecting an option (won't let you deselect because something in the nice-select2.js file in then undefined) and when selecting it says the option isn't found and asks if it has a value (still lets you select it but puts the error in the console)
+        selectElement.appendChild(option); // Add the option to the multi-select
     });
-    document.getElementById('download-csv').disabled = true
+    console.log(selectElement)
+    NiceSelect.bind(selectElement); // Initialize the NiceSelect on the multi-select
+    document.getElementById('memberships').style.display = 'block'; // Show multi-select now that it has retrieved the data
+})
 
-
-    // #endregion
+// Trigger download
+document.getElementById('download-csv').addEventListener('click', function () {
+    table.download('csv', 'data.csv');
 });
+document.getElementById('download-csv').disabled = true
+
+
+// #endregion
+
 
 document.getElementById('login-btn').addEventListener('click', () => {
     // #region user clicks Login button
