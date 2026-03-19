@@ -4,7 +4,10 @@ let table;
  * Shows or hides the login page
  * @param {boolean} visible - Show or hide the login page
  */
-let membershipTypesData = []
+let membershipTypesData = [];
+let membershipSelect;
+let membershipTypesRequest = null;
+let loadedMembershipTenantId = null;
 function setLogin(visible) {
     // #region Show/Hide Login
     const login = document.getElementById('login-area');
@@ -19,19 +22,102 @@ function setLogin(visible) {
     // #endregion
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+function populateMembershipSelect() {
+    const selectElement = document.getElementById('memberships-select');
+    selectElement.innerHTML = '';
+
+    membershipTypesData.forEach(membership => {
+        const option = document.createElement('option');
+        option.textContent = membership.name;
+        option.value = membership.id || membership.name;
+        selectElement.appendChild(option);
+    });
+
+    if (membershipTypesData.length === 0) {
+        document.getElementById('memberships').style.display = 'none';
+        return;
+    }
+
+    if (membershipSelect) {
+        membershipSelect.update();
+    } else {
+        membershipSelect = NiceSelect.bind(selectElement);
+    }
+
+    document.getElementById('memberships').style.display = 'block';
+}
+
+async function loadMembershipTypes(forceReload = false) {
+    const tenantID = document.getElementById('tenant-id').value.trim();
+
+    if (!tenantID) {
+        membershipTypesData = [];
+        loadedMembershipTenantId = null;
+        populateMembershipSelect();
+        return [];
+    }
+
+    const tenantChanged = loadedMembershipTenantId !== tenantID;
+    if (!forceReload && !tenantChanged && membershipTypesData.length > 0) {
+        populateMembershipSelect();
+        return membershipTypesData;
+    }
+
+    if (!forceReload && !tenantChanged && membershipTypesRequest) {
+        return membershipTypesRequest;
+    }
+
+    membershipTypesRequest = fetch('/membershipTypes', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ tenantID })
+    })
+        .then(async response => {
+            if (!response.ok) {
+                throw new Error(`Failed to load membership types: ${response.status}`);
+            }
+
+            return response.json();
+        })
+        .then(responseData => {
+            membershipTypesData = responseData.data || [];
+            loadedMembershipTenantId = tenantID;
+            populateMembershipSelect();
+            return membershipTypesData;
+        })
+        .catch(error => {
+            console.error('Error loading membership types:', error);
+            membershipTypesData = [];
+            loadedMembershipTenantId = null;
+            populateMembershipSelect();
+            return [];
+        })
+        .finally(() => {
+            membershipTypesRequest = null;
+        });
+
+    return membershipTypesRequest;
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
     // #region page loaded
 
-    fetch('/authenticate').then(response => {
+    try {
+        const response = await fetch('/authenticate');
         if (response.status === 401) {
             console.log('Not authenticated');
             setLogin(true);
         } else {
             console.log('Authenticated');
             setLogin(false);
+            await loadMembershipTypes();
         }
-
-    });
+    } catch (error) {
+        console.error('Error checking authentication:', error);
+        setLogin(true);
+    }
 
     //initialize table
     table = new Tabulator('#table',
@@ -64,37 +150,6 @@ document.addEventListener('DOMContentLoaded', () => {
             ] //create columns from data field names
         });
 
-
-
-    // Fetch the membeship type names
-    const tenantID = document.getElementById('tenant-id').value;
-    fetch('/membershipTypes', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ tenantID })
-    })
-        .then(response => response.json())
-        .then(async responseData => {
-            membershipTypesData = responseData.data
-        })
-
-    const selectElement = document.getElementById('memberships-select');
-
-    // Clear existing options (if any)
-    selectElement.innerHTML = "";
-
-    // Push the mebership type names into the options of the multi-select
-    membershipTypesData.forEach(membership => {
-        const option = document.createElement("option");
-        option.textContent = membership.name; // Display name
-        option.value = membership.id || membership.name; // Each option must have a value otherwise you get an error when deselecting an option (won't let you deselect because something in the nice-select2.js file in then undefined) and when selecting it says the option isn't found and asks if it has a value (still lets you select it but puts the error in the console)
-        selectElement.appendChild(option); // Add the option to the multi-select
-    });
-    console.log(selectElement)
-    NiceSelect.bind(selectElement); // Initialize the NiceSelect on the multi-select
-    document.getElementById('memberships').style.display = 'block'; // Show multi-select now that it has retrieved the data
 })
 
 // Trigger download
@@ -107,38 +162,42 @@ document.getElementById('download-csv').disabled = true
 // #endregion
 
 
-document.getElementById('login-btn').addEventListener('click', () => {
+document.getElementById('login-btn').addEventListener('click', async () => {
     // #region user clicks Login button
     const clientId = document.getElementById('client-id').value;
     const clientSecret = document.getElementById('client-secret').value;
 
     const data = { clientId, clientSecret };
 
-    fetch('/login', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-    })
-        .then(response => {
-            if (response.status === 401) {
-                console.log('Unauthorized');
-                setLogin(true);
-                return;
-            }
-            setLogin(false);
-            response.json()
-        })
-        .then(data => {
-            console.log(data);
+    try {
+        const response = await fetch('/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
         });
+
+        if (response.status === 401) {
+            console.log('Unauthorized');
+            setLogin(true);
+            return;
+        }
+
+        setLogin(false);
+        const responseData = await response.json();
+        await loadMembershipTypes(true);
+        console.log(responseData);
+    } catch (error) {
+        console.error('Login failed:', error);
+        setLogin(true);
+    }
 
     // #endregion
 }
 );
 
-document.getElementById('fetch-btn').addEventListener('click', () => {
+document.getElementById('fetch-btn').addEventListener('click', async () => {
     // #region user clicks Get button
 
     const startDate = document.getElementById('start-date').value;
@@ -151,6 +210,7 @@ document.getElementById('fetch-btn').addEventListener('click', () => {
     // Show loading spinner
     document.getElementById('loading-spinner').style.display = 'flex';
 
+    await loadMembershipTypes();
 
 
     // Fetch job data from jobs endpoint

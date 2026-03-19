@@ -2,11 +2,19 @@ const express = require('express');
 const app = express();
 const PORT = 3000;
 require('dotenv').config();
-const appKey = process.env.APP_KEY;
+const live = true; //change to false to use test environment
+const appKey = live ? process.env.LIVE_APP_KEY : process.env.TEST_APP_KEY;
+const cookieParser = require('cookie-parser');
+const live_environment_token = 'auth.servicetitan.io';
+const live_environment = 'api.servicetitan.io';
+const test_environment_token = 'auth-integration.servicetitan.io';
+const test_environment = 'api-integration.servicetitan.io';
+
 
 
 app.use(express.static('public'));
 app.use(express.json()); //middleware to pull json out of the request
+app.use(cookieParser()); //middleware to parse cookies from the request
 
 
 app.post('/login', async (req, res) => {
@@ -14,7 +22,7 @@ app.post('/login', async (req, res) => {
     const clientId = req.body.clientId;
     const clientSecret = req.body.clientSecret;
 
-    const url = "https://auth-integration.servicetitan.io/connect/token";
+    const url = `https://${live ? live_environment_token : test_environment_token}/connect/token`;
     const params = new URLSearchParams({
         client_id: clientId,
         client_secret: clientSecret,
@@ -49,7 +57,7 @@ app.post('/login', async (req, res) => {
 
 app.get('/authenticate', (req, res) => {
     // #region GET /authenticate
-    const accessToken = req.headers.cookie;
+    const accessToken = req.cookies.access_token;
     if (!accessToken) {
         res.status(401).json({ message: 'Unauthorized' });
         return;
@@ -63,7 +71,12 @@ app.post('/jobs', async (req, res) => {
     const startDate = req.body.startDate;
     const endDate = req.body.endDate;
     const tenantID = req.body.tenantID;
-    const accessToken = req.headers.cookie.split('=')[1];
+    const accessToken = req.cookies.access_token;
+
+    if (!accessToken) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+    }
 
     let allJobs = [];
     let page = 1;
@@ -76,7 +89,7 @@ app.post('/jobs', async (req, res) => {
 
             // Create an array of promises to fetch a batch of pages concurrently
             for (let i = 0; i < batchSize; i++) {
-                const url = `https://api-integration.servicetitan.io/jpm/v2/tenant/${tenantID}/jobs?jobStatus=Completed&page=${page + i}&completedOnOrAfter=${startDate}&completedBefore=${endDate}`;
+                const url = `https://${live ? live_environment : test_environment}/jpm/v2/tenant/${tenantID}/jobs?jobStatus=Completed&page=${page + i}&completedOnOrAfter=${startDate}&completedBefore=${endDate}`;
                 fetchPromises.push(fetch(url, {
                     method: 'GET',
                     headers: {
@@ -125,10 +138,15 @@ app.post('/invoices', async (req, res) => {
     // #region POST /invoices
     const invoiceId = req.body.invoiceId;
     const tenantID = req.body.tenantID;
-    const accessToken = req.headers.cookie.split('=')[1];
+    const accessToken = req.cookies.access_token;
+
+    if (!accessToken) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+    }
 
     try {
-        const invoiceUrl = `https://api-integration.servicetitan.io/accounting/v2/tenant/${tenantID}/invoices?ids=${invoiceId}`;
+        const invoiceUrl = `https://${live ? live_environment : test_environment}/accounting/v2/tenant/${tenantID}/invoices?ids=${invoiceId}`;
         const response = await fetch(invoiceUrl, {
             method: 'GET',
             headers: {
@@ -158,10 +176,15 @@ app.post('/customers', async (req, res) => {
     // #region POST /customers
     const customerId = req.body.customerId;
     const tenantID = req.body.tenantID;
-    const accessToken = req.headers.cookie.split('=')[1];
+    const accessToken = req.cookies.access_token;
+
+    if (!accessToken) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+    }
 
     try {
-        const customerUrl = `https://api-integration.servicetitan.io/crm/v2/tenant/${tenantID}/customers/?ids=${customerId}`;
+        const customerUrl = `https://${live ? live_environment : test_environment}/crm/v2/tenant/${tenantID}/customers/?ids=${customerId}`;
         const response = await fetch(customerUrl, {
             method: 'GET',
             headers: {
@@ -190,10 +213,15 @@ app.post('/customers', async (req, res) => {
 app.post('/membershipTypes', async (req, res) => {
     // #region POST /membershipTypes
     const tenantId = req.body.tenantID;
-    const accessToken = req.headers.cookie.split('=')[1];
+    const accessToken = req.cookies.access_token;
+
+    if (!accessToken) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+    }
 
     try {
-        const url = `https://api-integration.servicetitan.io/memberships/v2/tenant/${tenantId}/membership-types`;
+        const url = `https://${live ? live_environment : test_environment}/memberships/v2/tenant/${tenantId}/membership-types`;
         const response = await fetch(url, {
             method: 'GET',
             headers: {
@@ -207,6 +235,7 @@ app.post('/membershipTypes', async (req, res) => {
         }
 
         const membershipTypesData = await response.json();
+        console.log('Membership Types Data:', membershipTypesData);
         res.json({ data: membershipTypesData.data });
     } catch (error) {
         console.error('Error fetching membership types:', error);
@@ -222,11 +251,16 @@ app.post('/membershipTypes', async (req, res) => {
 app.post('/memberships', async (req, res) => {
     // #region POST /memberships
     const tenantId = req.body.tenantID;
-    const customerId = req.body.customerId
-    const accessToken = req.headers.cookie.split('=')[1];
+    const customerId = req.body.customerId;
+    const accessToken = req.cookies.access_token;
+
+    if (!accessToken) {
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
+    }
 
     try {
-        const membershipTypesUrl = `https://api-integration.servicetitan.io/memberships/v2/tenant/${tenantId}/memberships/?customerIds=${customerId}`;
+        const membershipTypesUrl = `https://${live ? live_environment : test_environment}/memberships/v2/tenant/${tenantId}/memberships/?customerIds=${customerId}`;
         const response = await fetch(membershipTypesUrl, {
             method: 'GET',
             headers: {
